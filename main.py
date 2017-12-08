@@ -62,8 +62,8 @@ def generator(z):
                 kernel_size=kernel_size,
                 stride=2,
                 activation_fn=tf.nn.tanh)
-            tf.histogram_summary('gen/out', net)
-            tf.image_summary("gen", net, max_images=8)
+            tf.summary.histogram('gen/out', net)
+            tf.summary.image("gen", net, max_outputs=8)
     return net
 
 
@@ -109,14 +109,14 @@ def mnist_gan(dataset):
     t_vars = tf.trainable_variables()
     global_step = tf.Variable(0, name='global_step', trainable=False)
     d_loss = -tf.reduce_mean(tf.log(d_model) + tf.log(1. - dg_model))
-    tf.scalar_summary('d_loss', d_loss)
+    tf.summary.scalar('d_loss', d_loss)
     d_trainer = tf.train.AdamOptimizer(.0002, beta1=.5).minimize(
         d_loss,
         global_step=global_step,
         var_list=[v for v in t_vars if 'discr/' in v.name])
 
     g_loss = -tf.reduce_mean(tf.log(dg_model))
-    tf.scalar_summary('g_loss', g_loss)
+    tf.summary.scalar('g_loss', g_loss)
     g_trainer = tf.train.AdamOptimizer(.0002, beta1=.5).minimize(
         g_loss, var_list=[v for v in t_vars if 'gen/' in v.name])
 
@@ -130,8 +130,8 @@ def mnist_gan(dataset):
     if checkpoint and not FLAGS.debug:
         print('Restoring from', checkpoint)
         saver.restore(sess, checkpoint)
-    summary = tf.merge_all_summaries()
-    summary_writer = tf.train.SummaryWriter(FLAGS.logdir, sess.graph)
+    summary = tf.summary.merge_all()
+    summary_writer = tf.summary.FileWriter(FLAGS.logdir, sess.graph)
 
     # Training loop
     for step in range(2 if FLAGS.debug else int(1e6)):
